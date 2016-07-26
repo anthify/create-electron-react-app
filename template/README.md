@@ -13,7 +13,6 @@ After creation, your project should look like this:
 my-app/
   README.md
   index.html
-  favicon.ico
   node_modules/
   package.json
   src/
@@ -27,7 +26,6 @@ my-app/
 For the project to build, **these files must exist with exact filenames**:
 
 * `index.html` is the page template;
-* `favicon.ico` is the icon you see in the browser tab;
 * `src/index.js` is the JavaScript entry point.
 
 You can delete or rename the other files.

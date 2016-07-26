@@ -48,7 +48,6 @@ Inside that directory, it will generate the initial project structure and instal
 my-app/
   README.md
   index.html
-  favicon.ico
   node_modules/
   package.json
   src/
