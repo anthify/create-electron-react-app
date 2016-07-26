@@ -54,15 +54,14 @@ var argv = require('minimist')(process.argv.slice(2));
  */
 var commands = argv._;
 if (commands.length === 0) {
+  if (argv.version) {
+    console.log('create-react-app version: ' + require('./package.json').version);
+    process.exit();
+  }
   console.error(
     'Usage: create-react-app <project-directory> [--verbose]'
   );
   process.exit(1);
-}
-
-if (argv.version) {
-  console.log('create-react-app version: ' + require('./package.json').version);
-  process.exit();
 }
 
 createApp(commands[0], argv.verbose, argv['scripts-version']);
@@ -89,15 +88,17 @@ function createApp(name, verbose, version) {
     private: true,
   };
   fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify(packageJson));
+  var originalDirectory = process.cwd();
   process.chdir(root);
 
   console.log('Installing packages. This might take a couple minutes.');
   console.log('Installing react-scripts from npm...');
+  console.log();
 
-  run(root, appName, version, verbose);
+  run(root, appName, version, verbose, originalDirectory);
 }
 
-function run(root, appName, version, verbose) {
+function run(root, appName, version, verbose, originalDirectory) {
   var args = [
     'install',
     verbose && '--verbose',
@@ -122,7 +123,7 @@ function run(root, appName, version, verbose) {
       'init.js'
     );
     var init = require(scriptsPath);
-    init(root, appName, verbose);
+    init(root, appName, verbose, originalDirectory);
   });
 }
 

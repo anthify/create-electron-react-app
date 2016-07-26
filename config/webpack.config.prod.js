@@ -12,38 +12,31 @@ var autoprefixer = require('autoprefixer');
 var webpack = require('webpack');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
 var ExtractTextPlugin = require('extract-text-webpack-plugin');
+var url = require('url');
+var paths = require('./paths');
 
-// TODO: hide this behind a flag and eliminate dead code on eject.
-// This shouldn't be exposed to the user.
-var isInNodeModules = 'node_modules' ===
-  path.basename(path.resolve(path.join(__dirname, '..', '..')));
-var relativePath = isInNodeModules ? '../../..' : '..';
-if (process.argv[2] === '--debug-template') {
-  relativePath = '../template';
+var homepagePath = require(paths.appPackageJson).homepage;
+var publicPath = homepagePath ? url.parse(homepagePath).pathname : '/';
+if (!publicPath.endsWith('/')) {
+  // Prevents incorrect paths in file-loader
+  publicPath += '/';
 }
-var srcPath = path.resolve(__dirname, relativePath, 'src');
-var nodeModulesPath = path.join(__dirname, '..', 'node_modules');
-var indexHtmlPath = path.resolve(__dirname, relativePath, 'index.html');
-var faviconPath = path.resolve(__dirname, relativePath, 'favicon.ico');
-var buildPath = path.join(__dirname, isInNodeModules ? '../../..' : '..', 'build');
 
 module.exports = {
   bail: true,
   devtool: 'source-map',
-  entry: path.join(srcPath, 'index'),
+  entry: path.join(paths.appSrc, 'index'),
   output: {
-    path: buildPath,
-    filename: '[name].[chunkhash].js',
-    chunkFilename: '[name].[chunkhash].chunk.js',
-    // TODO: this wouldn't work for e.g. GH Pages.
-    // Good news: we can infer it from package.json :-)
-    publicPath: '/'
+    path: paths.appBuild,
+    filename: '[name].[chunkhash:8].js',
+    chunkFilename: '[name].[chunkhash:8].chunk.js',
+    publicPath: publicPath
   },
   resolve: {
     extensions: ['', '.js'],
   },
   resolveLoader: {
-    root: nodeModulesPath,
+    root: paths.ownNodeModules,
     moduleTemplates: ['*-loader']
   },
   target: 'electron-main',
@@ -57,19 +50,19 @@ module.exports = {
       {
         test: /\.js$/,
         loader: 'eslint',
-        include: srcPath
+        include: paths.appSrc
       }
     ],
     loaders: [
       {
         test: /\.js$/,
-        include: srcPath,
+        include: paths.appSrc,
         loader: 'babel',
         query: require('./babel.prod')
       },
       {
         test: /\.css$/,
-        include: [srcPath, nodeModulesPath],
+        include: [paths.appSrc, paths.appNodeModules],
         // Disable autoprefixer in css-loader itself:
         // https://github.com/webpack/css-loader/issues/281
         // We already have it thanks to postcss.
@@ -77,14 +70,20 @@ module.exports = {
       },
       {
         test: /\.json$/,
+        include: [paths.appSrc, paths.appNodeModules],
         loader: 'json'
       },
       {
         test: /\.(jpg|png|gif|eot|svg|ttf|woff|woff2)$/,
+        include: [paths.appSrc, paths.appNodeModules],
         loader: 'file',
+        query: {
+          name: '[name].[hash:8].[ext]'
+        }
       },
       {
         test: /\.(mp4|webm)$/,
+        include: [paths.appSrc, paths.appNodeModules],
         loader: 'url?limit=10000'
       }
     ]
@@ -101,8 +100,8 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       inject: true,
-      template: indexHtmlPath,
-      favicon: faviconPath,
+      template: paths.appHtml,
+      favicon: paths.appFavicon,
       minify: {
         removeComments: true,
         collapseWhitespace: true,
@@ -132,6 +131,6 @@ module.exports = {
         screw_ie8: true
       }
     }),
-    new ExtractTextPlugin('[name].[contenthash].css')
+    new ExtractTextPlugin('[name].[contenthash:8].css')
   ]
 };

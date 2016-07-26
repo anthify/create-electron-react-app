@@ -24,7 +24,7 @@ module.exports = {
   parser: 'babel-eslint',
 
   // import plugin is termporarily disabled, scroll below to see why
-  plugins: ['react'/*, 'import'*/],
+  plugins: ['react'/*, 'import'*/, 'jsx-a11y'],
 
   env: {
     es6: true,
@@ -92,7 +92,6 @@ module.exports = {
     'no-loop-func': WARNING,
     'no-mixed-operators': [WARNING, {
       groups: [
-        ['+', '-', '*', '/', '%', '**'],
         ['&', '|', '^', '~', '<<', '>>', '>>>'],
         ['==', '!=', '===', '!==', '>', '>=', '<', '<='],
         ['&&', '||'],
@@ -179,10 +178,6 @@ module.exports = {
 
     // https://github.com/yannickcr/eslint-plugin-react/tree/master/docs/rules
     'react/jsx-equals-spacing': [WARNING, 'never'],
-    'react/jsx-handler-names': [WARNING, {
-      eventHandlerPrefix: 'handle',
-      eventHandlerPropPrefix: 'on',
-    }],
     'react/jsx-no-duplicate-props': [WARNING, { ignoreCase: true }],
     'react/jsx-no-undef': WARNING,
     'react/jsx-pascal-case': [WARNING, {
@@ -195,6 +190,12 @@ module.exports = {
     'react/no-direct-mutation-state': WARNING,
     'react/no-is-mounted': WARNING,
     'react/react-in-jsx-scope': WARNING,
-    'react/require-render-return': WARNING
+    'react/require-render-return': WARNING,
+
+    // https://github.com/evcohen/eslint-plugin-jsx-a11y/tree/master/docs/rules
+    'jsx-a11y/aria-role': WARNING,
+    'jsx-a11y/img-has-alt': WARNING,
+    'jsx-a11y/img-redundant-alt': WARNING,
+    'jsx-a11y/no-access-key': WARNING
   }
 };

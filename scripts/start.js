@@ -20,9 +20,7 @@ var opn = require('opn');
 // TODO: hide this behind a flag and eliminate dead code on eject.
 // This shouldn't be exposed to the user.
 var handleCompile;
-var isSmokeTest = process.argv.some(arg =>
-  arg.indexOf('--smoke-test') > -1
-);
+var isSmokeTest = process.argv.some(arg => arg.indexOf('--smoke-test') > -1);
 if (isSmokeTest) {
   handleCompile = function (err, stats) {
     if (err || stats.hasErrors() || stats.hasWarnings()) {
@@ -136,7 +134,7 @@ new WebpackDevServer(compiler, {
   hot: true, // Note: only CSS is currently hot reloaded
   publicPath: config.output.publicPath,
   quiet: true
-}).listen(3000, 'localhost', function (err, result) {
+}).listen(3000, function (err, result) {
   if (err) {
     return console.log(err);
   }
