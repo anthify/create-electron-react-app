@@ -1,4 +1,4 @@
-## UNRELEASED (July 27, 2016)
+## 0.1.2 (July 27, 2016)
 
 * Stream electron stdout/stderr
 * Change port to 3500
