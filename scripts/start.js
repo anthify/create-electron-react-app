@@ -133,6 +133,7 @@ function openElectronApp() {
   });
   child.on('close', function (code) {
     console.log(chalk.yellow('Electron exited with status ' + code));
+    process.exit(code);
   });
   child.on('error', function (error) {
     console.log(chalk.red('Error launching electron:\n'+error));
