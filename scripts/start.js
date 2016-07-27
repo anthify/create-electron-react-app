@@ -14,7 +14,7 @@ var chalk = require('chalk');
 var webpack = require('webpack');
 var WebpackDevServer = require('webpack-dev-server');
 var config = require('../config/webpack.config.dev');
-var exec = require('child_process').exec;
+var spawn = require('child_process').spawn;
 var opn = require('opn');
 
 // TODO: hide this behind a flag and eliminate dead code on eject.
@@ -119,14 +119,22 @@ compiler.plugin('done', function (stats) {
   }
 });
 
-function openBrowser() {
-  try {
-    // Try our best to reuse existing tab
-    // on OS X Google Chrome with AppleScript
-    exec('electron .');
-  } catch (err) {
-    // Ignore errors.
-  }
+function openElectronApp() {
+  var child = spawn('electron', ['.', '--enable-logs']);
+  const prefix = 'electron> '
+  const errPrefix = 'electron>'
+  child.stdout.on('data', function (data) {
+    console.log(chalk.blue(prefix + data.toString().replace(/\n$/g,'').split('\n').join('\n' + prefix)));
+  });
+  child.stderr.on('data', function (data) {
+    console.error(chalk.red(prefix + data.toString().replace(/\n$/g,'').split('\n').join('\n' + prefix)));
+  });
+  child.on('close', function (code) {
+    console.log(chalk.yellow('Electron exited with status ' + code));
+  });
+  child.on('error', function (error) {
+    console.log(chalk.red('Error launching electron:\n'+error));
+  });
 }
 
 new WebpackDevServer(compiler, {
@@ -142,5 +150,5 @@ new WebpackDevServer(compiler, {
   clearConsole();
   console.log(chalk.cyan('Starting the development server...'));
   console.log();
-  openBrowser();
+  openElectronApp();
 });
