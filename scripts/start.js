@@ -17,6 +17,8 @@ var config = require('../config/webpack.config.dev');
 var spawn = require('child_process').spawn;
 var opn = require('opn');
 
+var PORT = 3500;
+
 // TODO: hide this behind a flag and eliminate dead code on eject.
 // This shouldn't be exposed to the user.
 var handleCompile;
@@ -75,7 +77,7 @@ compiler.plugin('done', function (stats) {
   if (!hasErrors && !hasWarnings) {
     console.log(chalk.green('Compiled successfully!'));
     console.log();
-    console.log('The app is running at http://localhost:3000/');
+    console.log('The app is running at http://localhost:'+PORT+'/');
     console.log();
     return;
   }
@@ -142,7 +144,7 @@ new WebpackDevServer(compiler, {
   hot: true, // Note: only CSS is currently hot reloaded
   publicPath: config.output.publicPath,
   quiet: true
-}).listen(3000, function (err, result) {
+}).listen(PORT, function (err, result) {
   if (err) {
     return console.log(err);
   }
