@@ -13,11 +13,15 @@ var path = require('path');
 var chalk = require('chalk');
 var webpack = require('webpack');
 var WebpackDevServer = require('webpack-dev-server');
-var config = require('../config/webpack.config.dev');
 var spawn = require('child_process').spawn;
 var opn = require('opn');
+var detect = require('detect-port');
+var prompt = require('./utils/prompt');
+var config = require('../config/webpack.config.dev');
 
-var PORT = 3500;
+// Tools like Cloud9 rely on this
+var DEFAULT_PORT = process.env.PORT || 3500;
+var compiler;
 
 // TODO: hide this behind a flag and eliminate dead code on eject.
 // This shouldn't be exposed to the user.
@@ -62,69 +66,73 @@ function formatMessage(message) {
 }
 
 function clearConsole() {
-  process.stdout.write('\x1B[2J\x1B[0f');
+  process.stdout.write('\x1bc');
 }
 
-var compiler = webpack(config, handleCompile);
-compiler.plugin('invalid', function () {
-  clearConsole();
-  console.log('Compiling...');
-});
-compiler.plugin('done', function (stats) {
-  clearConsole();
-  var hasErrors = stats.hasErrors();
-  var hasWarnings = stats.hasWarnings();
-  if (!hasErrors && !hasWarnings) {
-    console.log(chalk.green('Compiled successfully!'));
-    console.log();
-    console.log('The app is running at http://localhost:'+PORT+'/');
-    console.log();
-    return;
-  }
+function setupCompiler(port) {
+  compiler = webpack(config, handleCompile);
 
-  var json = stats.toJson();
-  var formattedErrors = json.errors.map(message =>
-    'Error in ' + formatMessage(message)
-  );
-  var formattedWarnings = json.warnings.map(message =>
-    'Warning in ' + formatMessage(message)
-  );
+  compiler.plugin('invalid', function() {
+    clearConsole();
+    console.log('Compiling...');
+  });
 
-  if (hasErrors) {
-    console.log(chalk.red('Failed to compile.'));
-    console.log();
-    if (formattedErrors.some(isLikelyASyntaxError)) {
-      // If there are any syntax errors, show just them.
-      // This prevents a confusing ESLint parsing error
-      // preceding a much more useful Babel syntax error.
-      formattedErrors = formattedErrors.filter(isLikelyASyntaxError);
+  compiler.plugin('done', function(stats) {
+    clearConsole();
+    var hasErrors = stats.hasErrors();
+    var hasWarnings = stats.hasWarnings();
+    if (!hasErrors && !hasWarnings) {
+      console.log(chalk.green('Compiled successfully!'));
+      console.log();
+      console.log('The app is running at http://localhost:' + port + '/');
+      console.log();
+      return;
     }
-    formattedErrors.forEach(message => {
-      console.log(message);
+
+    var json = stats.toJson();
+    var formattedErrors = json.errors.map(message =>
+      'Error in ' + formatMessage(message)
+    );
+    var formattedWarnings = json.warnings.map(message =>
+      'Warning in ' + formatMessage(message)
+    );
+
+    if (hasErrors) {
+      console.log(chalk.red('Failed to compile.'));
       console.log();
-    });
-    // If errors exist, ignore warnings.
-    return;
-  }
+      if (formattedErrors.some(isLikelyASyntaxError)) {
+        // If there are any syntax errors, show just them.
+        // This prevents a confusing ESLint parsing error
+        // preceding a much more useful Babel syntax error.
+        formattedErrors = formattedErrors.filter(isLikelyASyntaxError);
+      }
+      formattedErrors.forEach(message => {
+        console.log(message);
+        console.log();
+      });
+      // If errors exist, ignore warnings.
+      return;
+    }
 
-  if (hasWarnings) {
-    console.log(chalk.yellow('Compiled with warnings.'));
-    console.log();
-    formattedWarnings.forEach(message => {
-      console.log(message);
+    if (hasWarnings) {
+      console.log(chalk.yellow('Compiled with warnings.'));
       console.log();
-    });
+      formattedWarnings.forEach(message => {
+        console.log(message);
+        console.log();
+      });
 
-    console.log('You may use special comments to disable some warnings.');
-    console.log('Use ' + chalk.yellow('// eslint-disable-next-line') + ' to ignore the next line.');
-    console.log('Use ' + chalk.yellow('/* eslint-disable */') + ' to ignore all warnings in a file.');
-  }
-});
+      console.log('You may use special comments to disable some warnings.');
+      console.log('Use ' + chalk.yellow('// eslint-disable-next-line') + ' to ignore the next line.');
+      console.log('Use ' + chalk.yellow('/* eslint-disable */') + ' to ignore all warnings in a file.');
+    }
+  });
+}
 
-function openElectronApp() {
+function openElectronApp(port) {
   var child = spawn('electron', ['.', '--enable-logs']);
-  const prefix = 'electron> '
-  const errPrefix = 'electron>'
+  const prefix = 'electron> ';
+  const errPrefix = 'electron>';
   child.stdout.on('data', function (data) {
     console.log(chalk.blue(prefix + data.toString().replace(/\n$/g,'').split('\n').join('\n' + prefix)));
   });
@@ -140,18 +148,43 @@ function openElectronApp() {
   });
 }
 
-new WebpackDevServer(compiler, {
-  historyApiFallback: true,
-  hot: true, // Note: only CSS is currently hot reloaded
-  publicPath: config.output.publicPath,
-  quiet: true
-}).listen(PORT, function (err, result) {
-  if (err) {
-    return console.log(err);
+function runDevServer(port) {
+  new WebpackDevServer(compiler, {
+    historyApiFallback: true,
+    hot: true, // Note: only CSS is currently hot reloaded
+    publicPath: config.output.publicPath,
+    quiet: true
+  }).listen(port, (err, result) => {
+    if (err) {
+      return console.log(err);
+    }
+
+    clearConsole();
+    console.log(chalk.cyan('Starting the development server...'));
+    console.log();
+  openElectronApp(port);
+  });
+}
+
+function run(port) {
+  setupCompiler(port);
+  runDevServer(port);
+}
+
+detect(DEFAULT_PORT).then(port => {
+  if (port === DEFAULT_PORT) {
+    run(port);
+    return;
   }
 
   clearConsole();
-  console.log(chalk.cyan('Starting the development server...'));
-  console.log();
-  openElectronApp();
+  var question =
+    chalk.yellow('Something is already running at port ' + DEFAULT_PORT + '.') +
+    '\n\nWould you like to run the app at another port instead?';
+
+  prompt(question, true).then(shouldChangePort => {
+    if (shouldChangePort) {
+      run(port);
+    }
+  });
 });
