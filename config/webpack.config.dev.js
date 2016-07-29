@@ -13,10 +13,12 @@ var webpack = require('webpack');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
 var paths = require('./paths');
 
+var publicPath = 'http://localhost:3500'
+
 module.exports = {
   devtool: 'eval',
   entry: [
-    require.resolve('webpack-dev-server/client') + '?http://localhost:3500',
+    require.resolve('webpack-dev-server/client') + '?' + publicPath,
     require.resolve('webpack/hot/dev-server'),
     require.resolve('./polyfills'),
     path.join(paths.appSrc, 'index')
@@ -26,7 +28,7 @@ module.exports = {
     path: paths.appBuild,
     pathinfo: true,
     filename: 'bundle.js',
-    publicPath: '/'
+    publicPath: publicPath
   },
   resolve: {
     extensions: ['', '.js'],
